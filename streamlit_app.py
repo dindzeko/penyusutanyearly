@@ -3,14 +3,21 @@ import pandas as pd
 from datetime import datetime
 
 # Fungsi untuk menghitung penyusutan
-def calculate_depreciation(initial_cost, acquisition_year, useful_life, reporting_year, capitalizations=None):
+def calculate_depreciation(initial_cost, acquisition_year, useful_life, reporting_year, capitalizations=None, corrections=None):
     if capitalizations is None:
         capitalizations = []
+    if corrections is None:
+        corrections = []
     
     cap_dict = {}
     for cap in capitalizations:
         year = cap['year']
         cap_dict.setdefault(year, []).append(cap)
+    
+    corr_dict = {}
+    for corr in corrections:
+        year = corr['year']
+        corr_dict.setdefault(year, []).append(corr)
     
     book_value = initial_cost
     remaining_life = useful_life
@@ -28,6 +35,12 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
                 life_extension = cap.get('life_extension', 0)
                 remaining_life = min(remaining_life + life_extension, original_life)
         
+        if current_year in corr_dict:
+            for corr in corr_dict[current_year]:
+                if corr['year'] > reporting_year:
+                    continue
+                book_value -= corr['amount']
+        
         annual_dep = book_value / remaining_life if remaining_life > 0 else 0
         accumulated_dep += annual_dep
         
@@ -44,6 +57,19 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
         current_year += 1
     
     return schedule
+
+# Fungsi untuk mengonversi DataFrame ke Excel
+def convert_df_to_excel(df):
+    import io
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        writer.close()
+    return buffer.getvalue()
+
+# Fungsi untuk format angka Indonesia
+def format_number_indonesia(number):
+    return f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # Streamlit app
 st.title("Shz_Depre_Tahunan")
@@ -98,8 +124,49 @@ else:
 # Tampilkan kapitalisasi yang telah ditambahkan
 st.sidebar.subheader("Kapitalisasi yang Ditambahkan")
 for i, cap in enumerate(st.session_state.capitalizations):
-    st.sidebar.write(f"Tahun: {cap['year']}, Jumlah: Rp{cap['amount']:,.2f}, Tambah Usia: {cap['life_extension']} tahun")
+    st.sidebar.write(f"Tahun: {cap['year']}, Jumlah: Rp{format_number_indonesia(cap['amount'])}, Tambah Usia: {cap['life_extension']} tahun")
     st.sidebar.button("✏️ Edit", key=f"edit_{i}", on_click=edit_capitalization, args=(i,))
+
+# Koreksi
+st.sidebar.header("📉 Daftar Koreksi")
+corrections = []
+if "corrections" not in st.session_state:
+    st.session_state.corrections = []
+
+def add_correction():
+    year = st.session_state.corr_year
+    amount = st.session_state.corr_amount
+    st.session_state.corrections.append({
+        'year': year,
+        'amount': amount
+    })
+
+def edit_correction(index):
+    st.session_state.corr_year = st.session_state.corrections[index]['year']
+    st.session_state.corr_amount = st.session_state.corrections[index]['amount']
+    st.session_state.edit_corr_index = index
+
+def save_edited_correction():
+    index = st.session_state.edit_corr_index
+    st.session_state.corrections[index] = {
+        'year': st.session_state.corr_year,
+        'amount': st.session_state.corr_amount
+    }
+    st.session_state.edit_corr_index = None
+
+st.sidebar.number_input("Tahun Koreksi", key="corr_year", min_value=1900, max_value=datetime.now().year, step=1)
+st.sidebar.number_input("Jumlah Koreksi (Rp)", key="corr_amount", min_value=0.0, step=0.01, format="%.2f")
+
+if "edit_corr_index" in st.session_state and st.session_state.edit_corr_index is not None:
+    st.sidebar.button("💾 Simpan Perubahan", on_click=save_edited_correction)
+else:
+    st.sidebar.button("➕ Tambah Koreksi", on_click=add_correction)
+
+# Tampilkan koreksi yang telah ditambahkan
+st.sidebar.subheader("Koreksi yang Ditambahkan")
+for i, corr in enumerate(st.session_state.corrections):
+    st.sidebar.write(f"Tahun: {corr['year']}, Jumlah: Rp{format_number_indonesia(corr['amount'])}")
+    st.sidebar.button("✏️ Edit", key=f"edit_corr_{i}", on_click=edit_correction, args=(i,))
 
 # Tombol untuk menghitung penyusutan
 if st.sidebar.button("🔍 Hitung Penyusutan"):
@@ -109,7 +176,8 @@ if st.sidebar.button("🔍 Hitung Penyusutan"):
             acquisition_year=acquisition_year,
             useful_life=useful_life,
             reporting_year=reporting_year,
-            capitalizations=st.session_state.capitalizations
+            capitalizations=st.session_state.capitalizations,
+            corrections=st.session_state.corrections
         )
         
         # Tampilkan hasil perhitungan
@@ -117,16 +185,13 @@ if st.sidebar.button("🔍 Hitung Penyusutan"):
         df = pd.DataFrame(schedule)
         st.dataframe(df)
         
-        # Tombol untuk mengekspor ke Excel
-        def convert_df(df):
-            return df.to_csv(index=False).encode('utf-8')
-        
-        csv = convert_df(df)
+        excel = convert_df_to_excel(df)
         st.download_button(
             label="📥 Export ke Excel",
-            data=csv,
-            file_name='depreciation_schedule.csv',
-            mime='text/csv',
+            data=excel,
+            file_name='depreciation_schedule.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
     else:
         st.error("Pastikan semua input valid dan lengkap.")
+
