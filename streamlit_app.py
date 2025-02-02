@@ -128,11 +128,16 @@ with col_cap3:
     cap_life = st.number_input("Tambahan Usia", key="cap_life", min_value=0, step=1)
 
 if st.sidebar.button("Tambah Kapitalisasi", key="add_cap"):
-    st.session_state.capitalizations.append({
-        'year': cap_year,
-        'amount': cap_amount,
-        'life_extension': cap_life
-    })
+    if cap_year < acquisition_year:
+        st.sidebar.warning("Tahun kapitalisasi tidak boleh lebih awal dari tahun perolehan.")
+    elif cap_year > 9999:
+        st.sidebar.warning("Tahun tidak boleh melebihi 4 digit.")
+    else:
+        st.session_state.capitalizations.append({
+            'year': cap_year,
+            'amount': cap_amount,
+            'life_extension': cap_life
+        })
 
 # Correction Management
 st.sidebar.header("✏️ Input Koreksi")
@@ -146,10 +151,15 @@ with col_corr2:
     corr_amount = st.number_input("Jumlah", key="corr_amount", min_value=0.0, step=1000000.0)
 
 if st.sidebar.button("Tambah Koreksi", key="add_corr"):
-    st.session_state.corrections.append({
-        'year': corr_year,
-        'amount': corr_amount
-    })
+    if corr_year < acquisition_year:
+        st.sidebar.warning("Tahun koreksi tidak boleh lebih awal dari tahun perolehan.")
+    elif corr_year > 9999:
+        st.sidebar.warning("Tahun tidak boleh melebihi 4 digit.")
+    else:
+        st.session_state.corrections.append({
+            'year': corr_year,
+            'amount': corr_amount
+        })
 
 # Main Content
 st.header("📊 Data Input")
@@ -168,7 +178,7 @@ with col1:
                 st.session_state.capitalizations.pop(i)
                 st.experimental_rerun()
             if st.button(f"Edit Kapitalisasi {i+1}"):
-                new_value = st.number_input(f"Edit Kapitalisasi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f")
+                new_value = st.number_input(f"Edit Kapitalisasi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f", key=f"edit_cap_{i}")
                 st.session_state.capitalizations[i]["amount"] = new_value
                 st.experimental_rerun()
     else:
@@ -187,7 +197,7 @@ with col2:
                 st.session_state.corrections.pop(i)
                 st.experimental_rerun()
             if st.button(f"Edit Koreksi {i+1}"):
-                new_value = st.number_input(f"Edit Koreksi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f")
+                new_value = st.number_input(f"Edit Koreksi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f", key=f"edit_corr_{i}")
                 st.session_state.corrections[i]["amount"] = new_value
                 st.experimental_rerun()
     else:
@@ -224,7 +234,7 @@ if st.button("🚀 Hitung Penyusutan", use_container_width=True):
             
             # Show results
             st.header("📈 Hasil Perhitungan")
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, use_container
             
             # Export to Excel
             excel_file = convert_df_to_excel(df)
