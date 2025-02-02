@@ -2,6 +2,21 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+
+# Tambahkan di bagian atas setelah imports
+def delete_capitalization(index):
+    st.session_state.capitalizations.pop(index)
+
+def edit_capitalization(index):
+    st.session_state.editing_cap_index = index
+
+# Analog untuk corrections
+def delete_correction(index):
+    st.session_state.corrections.pop(index)
+
+def edit_correction(index):
+    st.session_state.editing_corr_index = index
+    
 def calculate_depreciation(initial_cost, acquisition_year, useful_life, reporting_year, capitalizations=None, corrections=None):
     if capitalizations is None:
         capitalizations = []
@@ -168,15 +183,22 @@ with col1:
         cap_df["amount"] = cap_df["amount"].apply(format_number_indonesia)
         st.dataframe(cap_df, hide_index=True)
         
-        for i in range(len(st.session_state.capitalizations)):
+        for i, _ in enumerate(st.session_state.capitalizations):
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                if st.button(f"Hapus Kapitalisasi {i+1}", key=f"del_cap_{i}"):
-                    st.session_state.capitalizations.pop(i)
-                    st.experimental_rerun()
+                st.button(
+                    f"Hapus Kapitalisasi {i+1}",
+                    key=f"del_cap_{i}",
+                    on_click=delete_capitalization,
+                    args=(i,)
+                )
             with col_btn2:
-                if st.button(f"Edit Kapitalisasi {i+1}", key=f"edit_cap_{i}"):
-                    st.session_state.editing_cap_index = i
+                st.button(
+                    f"Edit Kapitalisasi {i+1}",
+                    key=f"edit_cap_{i}",
+                    on_click=edit_capitalization,
+                    args=(i,)
+                )
 
         if 'editing_cap_index' in st.session_state:
             i = st.session_state.editing_cap_index
@@ -195,10 +217,10 @@ with col1:
                         'life_extension': new_life
                     }
                     del st.session_state.editing_cap_index
-                    st.experimental_rerun()
+                    st.rerun()
             if st.button("Batal", key=f"cancel_cap_{i}"):
                 del st.session_state.editing_cap_index
-                st.experimental_rerun()
+                st.rerun()
     else:
         st.info("Tidak ada data kapitalisasi")
 
@@ -209,15 +231,22 @@ with col2:
         corr_df["amount"] = corr_df["amount"].apply(format_number_indonesia)
         st.dataframe(corr_df, hide_index=True)
         
-        for i in range(len(st.session_state.corrections)):
+        for i, _ in enumerate(st.session_state.corrections):
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                if st.button(f"Hapus Koreksi {i+1}", key=f"del_corr_{i}"):
-                    st.session_state.corrections.pop(i)
-                    st.experimental_rerun()
+                st.button(
+                    f"Hapus Koreksi {i+1}",
+                    key=f"del_corr_{i}",
+                    on_click=delete_correction,
+                    args=(i,)
+                )
             with col_btn2:
-                if st.button(f"Edit Koreksi {i+1}", key=f"edit_corr_{i}"):
-                    st.session_state.editing_corr_index = i
+                st.button(
+                    f"Edit Koreksi {i+1}",
+                    key=f"edit_corr_{i}",
+                    on_click=edit_correction,
+                    args=(i,)
+                )
 
         if 'editing_corr_index' in st.session_state:
             i = st.session_state.editing_corr_index
@@ -234,10 +263,10 @@ with col2:
                         'amount': new_amount
                     }
                     del st.session_state.editing_corr_index
-                    st.experimental_rerun()
+                    st.rerun()
             if st.button("Batal", key=f"cancel_corr_{i}"):
                 del st.session_state.editing_corr_index
-                st.experimental_rerun()
+                st.rerun()
     else:
         st.info("Tidak ada data koreksi")
 
