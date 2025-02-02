@@ -75,13 +75,13 @@ st.title("Shz_Depre_Tahunan")
 
 # Input Parameter
 st.sidebar.header("🔢 Parameter Input")
-initial_cost = st.sidebar.number_input("Initial Cost (Rp)", min_value=0.0, step=0.01, format="%.2f")
-acquisition_year = st.sidebar.number_input("Tahun Perolehan", min_value=1900, max_value=datetime.now().year, step=1)
+initial_cost = st.sidebar.number_input("Harga Perolehan (Rp)", min_value=0.0, step=0.01, format="%.2f")
+acquisition_year = st.sidebar.number_input("Tahun Perolehan", min_value=0, max_value=datetime.now().year, step=1)
 useful_life = st.sidebar.number_input("Masa Manfaat (tahun)", min_value=1, step=1)
-reporting_year = st.sidebar.number_input("Tahun Pelaporan", min_value=1900, max_value=datetime.now().year, step=1)
+reporting_year = st.sidebar.number_input("Tahun Pelaporan", min_value=2024, max_value=datetime.now().year, step=1)
 
 # Kapitalisasi
-st.sidebar.header("📊 Daftar Kapitalisasi")
+st.sidebar.header("📊 Rekap Kapitalisasi")
 if "capitalizations" not in st.session_state:
     st.session_state.capitalizations = []
 
@@ -125,7 +125,7 @@ for i, cap in enumerate(st.session_state.capitalizations):
     st.sidebar.button("✏️ Edit", key=f"edit_{i}", on_click=edit_capitalization, args=(i,))
 
 # Koreksi
-st.sidebar.header("📉 Daftar Koreksi")
+st.sidebar.header("📉 Koreksi Kurang")
 if "corrections" not in st.session_state:
     st.session_state.corrections = []
 
@@ -158,7 +158,7 @@ if "edit_corr_index" in st.session_state and st.session_state.edit_corr_index is
 else:
     st.sidebar.button("➕ Tambah Koreksi", on_click=add_correction)
 
-st.sidebar.subheader("Koreksi yang Ditambahkan")
+st.sidebar.subheader("Rekapitulasi Koreksi")
 for i, corr in enumerate(st.session_state.corrections):
     st.sidebar.write(f"Tahun: {corr['year']}, Jumlah: Rp{format_number_indonesia(corr['amount'])}")
     st.sidebar.button("✏️ Edit", key=f"edit_corr_{i}", on_click=edit_correction, args=(i,))
