@@ -74,10 +74,12 @@ def format_number_indonesia(number):
 # Streamlit app
 st.title("Shz_Depre_Tahunan")
 # Format number according to locale
-formatted_cost = locale.format_string("%.2f", initial_cost, grouping=True)
+formatted_cost = locale.format_string("%.2f", str(initial_cost), grouping=True)
 
 # Display formatted number
 st.write(f"Harga Perolehan: {formatted_cost}")
+st.write(f"Jumlah Kapitalisasi: {formatted_cost}")
+st.write(f"Jumlah koreksi: {formatted_cost}")
 
 # Set locale to Indonesian
 locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
