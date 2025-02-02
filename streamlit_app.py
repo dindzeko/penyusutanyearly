@@ -94,7 +94,7 @@ initial_cost = st.sidebar.number_input(
 
 acquisition_year = st.sidebar.number_input(
     "Tahun Perolehan",
-    min_value=1000,
+    min_value=0,
     max_value=datetime.now().year,
     step=1
 )
@@ -108,8 +108,8 @@ useful_life = st.sidebar.number_input(
 
 reporting_year = st.sidebar.number_input(
     "Tahun Pelaporan",
-    min_value=1000,
-    max_value=9999,
+    min_value=2024,
+    max_value=2100,
     step=1,
     value=datetime.now().year
 )
@@ -121,7 +121,7 @@ if "capitalizations" not in st.session_state:
 
 col_cap1, col_cap2, col_cap3 = st.sidebar.columns(3)
 with col_cap1:
-    cap_year = st.number_input("Tahun", key="cap_year", min_value=1000, max_value=9999, step=1)
+    cap_year = st.number_input("Tahun", key="cap_year", min_value=1900, max_value=2100, step=1)
 with col_cap2:
     cap_amount = st.number_input("Jumlah", key="cap_amount", min_value=0.0, step=1000000.0)
 with col_cap3:
@@ -144,7 +144,7 @@ if "corrections" not in st.session_state:
 
 col_corr1, col_corr2 = st.sidebar.columns(2)
 with col_corr1:
-    corr_year = st.number_input("Tahun", key="corr_year", min_value=1000, max_value=9999, step=1)
+    corr_year = st.number_input("Tahun", key="corr_year", min_value=0, max_value=2100, step=1)
 with col_corr2:
     corr_amount = st.number_input("Jumlah", key="corr_amount", min_value=0.0, step=1000000.0)
 
@@ -181,7 +181,7 @@ with col1:
         if 'editing_cap_index' in st.session_state:
             i = st.session_state.editing_cap_index
             cap = st.session_state.capitalizations[i]
-            new_year = st.number_input("Tahun", value=cap['year'], min_value=1000, max_value=9999, key=f"edit_cap_year_{i}")
+            new_year = st.number_input("Tahun", value=cap['year'], min_value=0, max_value=2100, key=f"edit_cap_year_{i}")
             new_amount = st.number_input("Jumlah", value=cap['amount'], min_value=0.0, step=1000000.0, key=f"edit_cap_amount_{i}")
             new_life = st.number_input("Tambahan Usia", value=cap['life_extension'], min_value=0, step=1, key=f"edit_cap_life_{i}")
             
@@ -222,7 +222,7 @@ with col2:
         if 'editing_corr_index' in st.session_state:
             i = st.session_state.editing_corr_index
             corr = st.session_state.corrections[i]
-            new_year = st.number_input("Tahun", value=corr['year'], min_value=1000, max_value=9999, key=f"edit_corr_year_{i}")
+            new_year = st.number_input("Tahun", value=corr['year'], min_value=0, max_value=2100, key=f"edit_corr_year_{i}")
             new_amount = st.number_input("Jumlah", value=corr['amount'], min_value=0.0, step=1000000.0, key=f"edit_corr_amount_{i}")
             
             if st.button("Simpan Perubahan", key=f"save_corr_{i}"):
@@ -252,22 +252,22 @@ if st.button("🚀 Hitung Penyusutan", use_container_width=True):
         error_messages.append("Tahun perolehan tidak boleh lebih besar dari tahun pelaporan")
     
     # Year format validations
-    if not 1000 <= acquisition_year <= 9999:
-        error_messages.append("Tahun Perolehan harus 4 digit")
-    if not 1000 <= reporting_year <= 9999:
-        error_messages.append("Tahun Pelaporan harus 4 digit")
+    if not 1900 <= acquisition_year <= 2100:
+        error_messages.append("Perhatikan Input Tahun Anda")
+    if not 1900 <= reporting_year <= 2100:
+        error_messages.append("Perhatikan Input Tahun Anda")
     
     # Capitalization validations
     for cap in st.session_state.capitalizations:
-        if not 1000 <= cap['year'] <= 9999:
-            error_messages.append(f"Tahun Kapitalisasi {cap['year']} tidak valid (harus 4 digit)")
+        if not 1900 <= cap['year'] <= 2100:
+            error_messages.append(f"Tahun Kapitalisasi {cap['year']} Perhatikan Input Tahun Anda")
         if cap['year'] < acquisition_year:
             error_messages.append(f"Tahun Kapitalisasi {cap['year']} tidak boleh lebih awal dari Tahun Perolehan")
     
     # Correction validations
     for corr in st.session_state.corrections:
-        if not 1000 <= corr['year'] <= 9999:
-            error_messages.append(f"Tahun Koreksi {corr['year']} tidak valid (harus 4 digit)")
+        if not 1900 <= corr['year'] <= 2100:
+            error_messages.append(f"Tahun Koreksi {corr['year']} Perhatikan Input Tahun Anda")
         if corr['year'] < acquisition_year:
             error_messages.append(f"Tahun Koreksi {corr['year']} tidak boleh lebih awal dari Tahun Perolehan")
     
