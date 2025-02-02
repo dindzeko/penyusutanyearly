@@ -94,7 +94,7 @@ initial_cost = st.sidebar.number_input(
 
 acquisition_year = st.sidebar.number_input(
     "Tahun Perolehan",
-    min_value=2000,
+    min_value=0,
     max_value=datetime.now().year,
     step=1
 )
@@ -108,7 +108,7 @@ useful_life = st.sidebar.number_input(
 
 reporting_year = st.sidebar.number_input(
     "Tahun Pelaporan",
-    min_value=2000,
+    min_value=2024,
     max_value=datetime.now().year + 10,
     step=1,
     value=datetime.now().year
