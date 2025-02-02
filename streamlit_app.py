@@ -161,8 +161,18 @@ with col1:
         cap_df = pd.DataFrame(st.session_state.capitalizations)
         cap_df["amount"] = cap_df["amount"].apply(format_number_indonesia)
         st.dataframe(cap_df, hide_index=True)
+        
+        # Add delete and edit buttons
+        for i in range(len(st.session_state.capitalizations)):
+            if st.button(f"Hapus Kapitalisasi {i+1}"):
+                st.session_state.capitalizations.pop(i)
+                st.experimental_rerun()
+            if st.button(f"Edit Kapitalisasi {i+1}"):
+                new_value = st.number_input(f"Edit Kapitalisasi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f")
+                st.session_state.capitalizations[i]["amount"] = new_value
+                st.experimental_rerun()
     else:
-        st.info("tidak data kapitalisasi")
+        st.info("Tidak ada data kapitalisasi")
 
 with col2:
     st.subheader("Koreksi")
@@ -170,8 +180,18 @@ with col2:
         corr_df = pd.DataFrame(st.session_state.corrections)
         corr_df["amount"] = corr_df["amount"].apply(format_number_indonesia)
         st.dataframe(corr_df, hide_index=True)
+        
+        # Add delete and edit buttons
+        for i in range(len(st.session_state.corrections)):
+            if st.button(f"Hapus Koreksi {i+1}"):
+                st.session_state.corrections.pop(i)
+                st.experimental_rerun()
+            if st.button(f"Edit Koreksi {i+1}"):
+                new_value = st.number_input(f"Edit Koreksi {i+1} (Rp)", min_value=0.0, step=0.01, format="%.2f")
+                st.session_state.corrections[i]["amount"] = new_value
+                st.experimental_rerun()
     else:
-        st.info("tidak data koreksi")
+        st.info("Tidak ada data koreksi")
 
 # Calculation and Results
 if st.button("🚀 Hitung Penyusutan", use_container_width=True):
