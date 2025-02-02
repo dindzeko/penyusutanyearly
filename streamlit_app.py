@@ -96,7 +96,7 @@ def format_number_indonesia(number):
 
 # Streamlit App Configuration
 st.set_page_config(page_title="Depresiasi Tahunan", layout="wide")
-st.title("📉 Kalkulator Penyusutan Aset Tetap")
+st.title("📉 Shz_Calc_Depre_Yearly")
 
 # Sidebar Inputs
 st.sidebar.header("📥 Parameter Input")
