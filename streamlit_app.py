@@ -68,8 +68,9 @@ def convert_df_to_excel(df):
     return buffer.getvalue()
 
 # Fungsi untuk format angka Indonesia
-def format_number_indonesia(number):
-    return f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+ if isinstance(number, (int, float)):
+        return f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return number
 
 # Streamlit app
 st.title("Shz_Depre_Tahunan")
@@ -180,11 +181,21 @@ if st.sidebar.button("🔍 Hitung Penyusutan"):
             corrections=st.session_state.corrections
         )
         
-        # Tampilkan hasil perhitungan
+         # Tampilkan hasil perhitungan
         st.subheader("📈 Hasil Perhitungan")
         df = pd.DataFrame(schedule)
-        st.dataframe(df)
         
+        # Format tampilan untuk Streamlit
+        display_df = df.copy()
+        numeric_cols = ['depreciation', 'accumulated', 'book_value']
+        for col in numeric_cols:
+            display_df[col] = display_df[col].apply(format_number_indonesia)
+        
+        display_df['year'] = display_df['year'].astype(str)
+        
+        st.dataframe(display_df)
+        
+        # Export menggunakan dataframe asli (tanpa format string)
         excel = convert_df_to_excel(df)
         st.download_button(
             label="📥 Export ke Excel",
@@ -192,6 +203,4 @@ if st.sidebar.button("🔍 Hitung Penyusutan"):
             file_name='depreciation_schedule.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-    else:
-        st.error("Pastikan semua input valid dan lengkap.")
 
