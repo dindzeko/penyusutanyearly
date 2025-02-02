@@ -115,7 +115,7 @@ reporting_year = st.sidebar.number_input(
 )
 
 # Capitalization Management
-st.sidebar.header("➕ Manajemen Kapitalisasi")
+st.sidebar.header("➕ Input Kapitalisasi")
 if "capitalizations" not in st.session_state:
     st.session_state.capitalizations = []
 
@@ -135,7 +135,7 @@ if st.sidebar.button("Tambah Kapitalisasi", key="add_cap"):
     })
 
 # Correction Management
-st.sidebar.header("✏️ Manajemen Koreksi")
+st.sidebar.header("✏️ Input Koreksi")
 if "corrections" not in st.session_state:
     st.session_state.corrections = []
 
