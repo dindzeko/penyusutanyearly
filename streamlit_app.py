@@ -123,7 +123,7 @@ useful_life = st.sidebar.number_input(
 
 reporting_year = st.sidebar.number_input(
     "Tahun Pelaporan",
-    min_value=2024,
+    min_value=2006,
     max_value=2100,
     step=1,
     value=datetime.now().year
