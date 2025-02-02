@@ -162,7 +162,7 @@ with col1:
         cap_df["amount"] = cap_df["amount"].apply(format_number_indonesia)
         st.dataframe(cap_df, hide_index=True)
     else:
-        st.info("Belum ada data kapitalisasi")
+        st.info("tidak data kapitalisasi")
 
 with col2:
     st.subheader("Koreksi")
@@ -171,7 +171,7 @@ with col2:
         corr_df["amount"] = corr_df["amount"].apply(format_number_indonesia)
         st.dataframe(corr_df, hide_index=True)
     else:
-        st.info("Belum ada data koreksi")
+        st.info("tidak data koreksi")
 
 # Calculation and Results
 if st.button("🚀 Hitung Penyusutan", use_container_width=True):
