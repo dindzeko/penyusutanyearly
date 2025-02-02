@@ -1,5 +1,4 @@
 import streamlit as st
-import locale
 import pandas as pd
 from datetime import datetime
 
@@ -9,16 +8,19 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
     if corrections is None:
         corrections = []
     
+    # Organize capitalizations by year
     cap_dict = {}
     for cap in capitalizations:
         year = cap['year']
         cap_dict.setdefault(year, []).append(cap)
     
+    # Organize corrections by year
     corr_dict = {}
     for corr in corrections:
         year = corr['year']
         corr_dict.setdefault(year, []).append(corr)
     
+    # Initialize variables
     book_value = initial_cost
     remaining_life = useful_life
     current_year = acquisition_year
@@ -26,7 +28,9 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
     accumulated_dep = 0
     schedule = []
     
+    # Calculate yearly depreciation
     while remaining_life > 0 and current_year <= reporting_year:
+        # Process capitalizations first
         if current_year in cap_dict:
             for cap in cap_dict[current_year]:
                 if cap['year'] > reporting_year:
@@ -35,15 +39,18 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
                 life_extension = cap.get('life_extension', 0)
                 remaining_life = min(remaining_life + life_extension, original_life)
         
+        # Process corrections
         if current_year in corr_dict:
             for corr in corr_dict[current_year]:
                 if corr['year'] > reporting_year:
                     continue
                 book_value -= corr['amount']
         
+        # Calculate annual depreciation
         annual_dep = book_value / remaining_life if remaining_life > 0 else 0
         accumulated_dep += annual_dep
         
+        # Add to schedule
         schedule.append({
             'year': current_year,
             'depreciation': round(annual_dep, 2),
@@ -52,6 +59,7 @@ def calculate_depreciation(initial_cost, acquisition_year, useful_life, reportin
             'sisa_mm': remaining_life - 1
         })
         
+        # Update values for next year
         book_value -= annual_dep
         remaining_life -= 1
         current_year += 1
@@ -71,141 +79,139 @@ def format_number_indonesia(number):
         return f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     return number
 
-# Streamlit app
-st.title("Shz_Depre_Tahunan")
-# Format number according to locale
-formatted_cost = locale.format_string("%.2f", str(initial_cost), grouping=True)
+# Streamlit App Configuration
+st.set_page_config(page_title="Depresiasi Tahunan", layout="wide")
+st.title("📉 Kalkulator Penyusutan Aset Tetap")
 
-# Display formatted number
-st.write(f"Harga Perolehan: {formatted_cost}")
-st.write(f"Jumlah Kapitalisasi: {formatted_cost}")
-st.write(f"Jumlah koreksi: {formatted_cost}")
+# Sidebar Inputs
+st.sidebar.header("📥 Parameter Input")
+initial_cost = st.sidebar.number_input(
+    "Harga Perolehan Awal (Rp)",
+    min_value=0.0,
+    step=1000000.0,
+    format="%.2f"
+)
 
-# Set locale to Indonesian
-locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
+acquisition_year = st.sidebar.number_input(
+    "Tahun Perolehan",
+    min_value=2000,
+    max_value=datetime.now().year,
+    step=1
+)
 
-# Input Parameter
-st.sidebar.header("🔢 Parameter Input")
-initial_cost = st.sidebar.number_input("Harga Perolehan (Rp)", min_value=0.0, step=0.01, format="%.2f")
-acquisition_year = st.sidebar.number_input("Tahun Perolehan", min_value=0, max_value=datetime.now().year, step=1)
-useful_life = st.sidebar.number_input("Masa Manfaat (tahun)", min_value=1, step=1)
-reporting_year = st.sidebar.number_input("Tahun Pelaporan", min_value=2024, max_value=datetime.now().year, step=1)
+useful_life = st.sidebar.number_input(
+    "Masa Manfaat (tahun)",
+    min_value=1,
+    max_value=100,
+    step=1
+)
 
-# Kapitalisasi
-st.sidebar.header("📊 Rekap Kapitalisasi")
+reporting_year = st.sidebar.number_input(
+    "Tahun Pelaporan",
+    min_value=2000,
+    max_value=datetime.now().year + 10,
+    step=1,
+    value=datetime.now().year
+)
+
+# Capitalization Management
+st.sidebar.header("➕ Manajemen Kapitalisasi")
 if "capitalizations" not in st.session_state:
     st.session_state.capitalizations = []
 
-def add_capitalization():
-    year = st.session_state.cap_year
-    amount = st.session_state.cap_amount
-    life_extension = st.session_state.cap_life_extension
+col_cap1, col_cap2, col_cap3 = st.sidebar.columns(3)
+with col_cap1:
+    cap_year = st.number_input("Tahun", key="cap_year", min_value=2000, step=1)
+with col_cap2:
+    cap_amount = st.number_input("Jumlah", key="cap_amount", min_value=0.0, step=1000000.0)
+with col_cap3:
+    cap_life = st.number_input("Tambahan Usia", key="cap_life", min_value=0, step=1)
+
+if st.sidebar.button("Tambah Kapitalisasi", key="add_cap"):
     st.session_state.capitalizations.append({
-        'year': year,
-        'amount': amount,
-        'life_extension': life_extension
+        'year': cap_year,
+        'amount': cap_amount,
+        'life_extension': cap_life
     })
 
-def edit_capitalization(index):
-    st.session_state.cap_year = st.session_state.capitalizations[index]['year']
-    st.session_state.cap_amount = st.session_state.capitalizations[index]['amount']
-    st.session_state.cap_life_extension = st.session_state.capitalizations[index]['life_extension']
-    st.session_state.edit_index = index
-
-def save_edited_capitalization():
-    index = st.session_state.edit_index
-    st.session_state.capitalizations[index] = {
-        'year': st.session_state.cap_year,
-        'amount': st.session_state.cap_amount,
-        'life_extension': st.session_state.cap_life_extension
-    }
-    st.session_state.edit_index = None
-
-st.sidebar.number_input("Tahun Kapitalisasi", key="cap_year", min_value=1900, max_value=datetime.now().year, step=1)
-st.sidebar.number_input("Jumlah Kapitalisasi (Rp)", key="cap_amount", min_value=0.0, step=0.01, format="%.2f")
-st.sidebar.number_input("Tambah Usia (tahun)", key="cap_life_extension", min_value=0, step=1)
-
-if "edit_index" in st.session_state and st.session_state.edit_index is not None:
-    st.sidebar.button("💾 Simpan Perubahan", on_click=save_edited_capitalization)
-else:
-    st.sidebar.button("➕ Tambah Kapitalisasi", on_click=add_capitalization)
-
-st.sidebar.subheader("Kapitalisasi yang Ditambahkan")
-for i, cap in enumerate(st.session_state.capitalizations):
-    st.sidebar.write(f"Tahun: {cap['year']}, Jumlah: Rp{format_number_indonesia(cap['amount'])}, Tambah Usia: {cap['life_extension']} tahun")
-    st.sidebar.button("✏️ Edit", key=f"edit_{i}", on_click=edit_capitalization, args=(i,))
-
-# Koreksi
-st.sidebar.header("📉 Koreksi Kurang")
+# Correction Management
+st.sidebar.header("✏️ Manajemen Koreksi")
 if "corrections" not in st.session_state:
     st.session_state.corrections = []
 
-def add_correction():
-    year = st.session_state.corr_year
-    amount = st.session_state.corr_amount
+col_corr1, col_corr2 = st.sidebar.columns(2)
+with col_corr1:
+    corr_year = st.number_input("Tahun", key="corr_year", min_value=2000, step=1)
+with col_corr2:
+    corr_amount = st.number_input("Jumlah", key="corr_amount", min_value=0.0, step=1000000.0)
+
+if st.sidebar.button("Tambah Koreksi", key="add_corr"):
     st.session_state.corrections.append({
-        'year': year,
-        'amount': amount
+        'year': corr_year,
+        'amount': corr_amount
     })
 
-def edit_correction(index):
-    st.session_state.corr_year = st.session_state.corrections[index]['year']
-    st.session_state.corr_amount = st.session_state.corrections[index]['amount']
-    st.session_state.edit_corr_index = index
+# Main Content
+st.header("📊 Data Input")
 
-def save_edited_correction():
-    index = st.session_state.edit_corr_index
-    st.session_state.corrections[index] = {
-        'year': st.session_state.corr_year,
-        'amount': st.session_state.corr_amount
-    }
-    st.session_state.edit_corr_index = None
-
-st.sidebar.number_input("Tahun Koreksi", key="corr_year", min_value=1900, max_value=datetime.now().year, step=1)
-st.sidebar.number_input("Jumlah Koreksi (Rp)", key="corr_amount", min_value=0.0, step=0.01, format="%.2f")
-
-if "edit_corr_index" in st.session_state and st.session_state.edit_corr_index is not None:
-    st.sidebar.button("💾 Simpan Perubahan", on_click=save_edited_correction)
-else:
-    st.sidebar.button("➕ Tambah Koreksi", on_click=add_correction)
-
-st.sidebar.subheader("Rekapitulasi Koreksi")
-for i, corr in enumerate(st.session_state.corrections):
-    st.sidebar.write(f"Tahun: {corr['year']}, Jumlah: Rp{format_number_indonesia(corr['amount'])}")
-    st.sidebar.button("✏️ Edit", key=f"edit_corr_{i}", on_click=edit_correction, args=(i,))
-
-if st.sidebar.button("🔍 Hitung Penyusutan"):
-    if initial_cost > 0 and acquisition_year <= reporting_year and useful_life > 0:
-        schedule = calculate_depreciation(
-            initial_cost=initial_cost,
-            acquisition_year=acquisition_year,
-            useful_life=useful_life,
-            reporting_year=reporting_year,
-            capitalizations=st.session_state.capitalizations,
-            corrections=st.session_state.corrections
-        )
-        
-        st.subheader("📈 Hasil Perhitungan")
-        df = pd.DataFrame(schedule)
-        
-        # Format tampilan
-        display_df = df.copy()
-        numeric_cols = ['depreciation', 'accumulated', 'book_value']
-        for col in numeric_cols:
-            display_df[col] = display_df[col].apply(format_number_indonesia)
-        
-        display_df['year'] = display_df['year'].astype(str)  # Konversi tahun ke string
-        display_df['sisa_mm'] = display_df['sisa_mm'].astype(int)  # Pertahankan sebagai integer
-        
-        st.dataframe(display_df)
-        
-        # Export menggunakan dataframe asli
-        excel = convert_df_to_excel(df)
-        st.download_button(
-            label="📥 Export ke Excel",
-            data=excel,
-            file_name='depreciation_schedule.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("Kapitalisasi")
+    if st.session_state.capitalizations:
+        cap_df = pd.DataFrame(st.session_state.capitalizations)
+        cap_df["amount"] = cap_df["amount"].apply(format_number_indonesia)
+        st.dataframe(cap_df, hide_index=True)
     else:
-        st.error("Pastikan semua input valid dan lengkap.")
+        st.info("Belum ada data kapitalisasi")
+
+with col2:
+    st.subheader("Koreksi")
+    if st.session_state.corrections:
+        corr_df = pd.DataFrame(st.session_state.corrections)
+        corr_df["amount"] = corr_df["amount"].apply(format_number_indonesia)
+        st.dataframe(corr_df, hide_index=True)
+    else:
+        st.info("Belum ada data koreksi")
+
+# Calculation and Results
+if st.button("🚀 Hitung Penyusutan", use_container_width=True):
+    if initial_cost <= 0:
+        st.error("Harga perolehan harus lebih dari 0")
+    elif acquisition_year > reporting_year:
+        st.error("Tahun perolehan tidak boleh lebih besar dari tahun pelaporan")
+    else:
+        with st.spinner("Menghitung penyusutan..."):
+            schedule = calculate_depreciation(
+                initial_cost=initial_cost,
+                acquisition_year=acquisition_year,
+                useful_life=useful_life,
+                reporting_year=reporting_year,
+                capitalizations=st.session_state.capitalizations,
+                corrections=st.session_state.corrections
+            )
+            
+            df = pd.DataFrame(schedule)
+            display_df = df.copy()
+            
+            # Format numeric columns
+            numeric_cols = ['depreciation', 'accumulated', 'book_value']
+            for col in numeric_cols:
+                display_df[col] = display_df[col].apply(format_number_indonesia)
+            
+            # Format other columns
+            display_df['year'] = display_df['year'].astype(str)
+            display_df['sisa_mm'] = display_df['sisa_mm'].astype(int)
+            
+            # Show results
+            st.header("📈 Hasil Perhitungan")
+            st.dataframe(display_df, use_container_width=True)
+            
+            # Export to Excel
+            excel_file = convert_df_to_excel(df)
+            st.download_button(
+                label="💾 Download Excel",
+                data=excel_file,
+                file_name="depresiasi.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
